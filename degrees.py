@@ -83,6 +83,19 @@ def main():
             movie = movies[path[i + 1][0]]["title"]
             print(f"{i + 1}: {person1} and {person2} starred in {movie}")
 
+def calcPath(removedNeighbor):
+
+    path = []
+    neighbor = removedNeighbor
+    while neighbor.parent != None:
+        neighborId = neighbor.personId
+        neighborMovie = neighbor.movieId
+        path.append((neighborMovie,neighborId))
+        neighbor = neighbor.parent
+
+    return path
+
+
 
 def shortest_path(source, target):
     """
@@ -91,10 +104,33 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
+  
+    frontier = QueueFrontier()
+    initialNode = Node(source,None,None)
+    frontier.add(initialNode)
 
-    # TODO
-    raise NotImplementedError
+    explored = []
 
+    while not frontier.empty():
+
+        removedNeighbor = frontier.remove()
+        if removedNeighbor.personId in explored:
+            continue
+
+        explored.append(removedNeighbor.personId)
+        neighbors = neighbors_for_person(removedNeighbor.personId)
+        
+        for neighbor in neighbors:
+            if neighbor not in explored:
+                movie_id, person_id = neighbor
+
+                if person_id == target:
+                    NewNode = Node(person_id,removedNeighbor,movie_id)
+                    path = calcPath(NewNode)
+                    print("path is",path)
+                    return list(reversed(path))
+                neighborNode = Node(person_id,removedNeighbor,movie_id)
+                frontier.add(neighborNode)
 
 def person_id_for_name(name):
     """
@@ -134,6 +170,43 @@ def neighbors_for_person(person_id):
             neighbors.add((movie_id, person_id))
     return neighbors
 
+class Node():
+    def __init__(self, personId, parent,movieId):
+        self.personId = personId
+        self.parent = parent
+        self.movieId = movieId
+
+class StackFrontier():
+    def __init__(self):
+        self.frontier = []
+
+    def add(self, node):
+        self.frontier.append(node)
+
+    def contains_state(self, state):
+        return any(node.state == state for node in self.frontier)
+
+    def empty(self):
+        return len(self.frontier) == 0
+
+    def remove(self):
+        if self.empty():
+            raise Exception("empty frontier")
+        else:
+            node = self.frontier[-1]
+            self.frontier = self.frontier[:-1]
+            return node
+
+
+class QueueFrontier(StackFrontier):
+
+    def remove(self):
+        if self.empty():
+            raise Exception("empty frontier")
+        else:
+            node = self.frontier[0]
+            self.frontier = self.frontier[1:]
+            return node
 
 if __name__ == "__main__":
     main()
